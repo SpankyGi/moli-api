@@ -9,17 +9,21 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-const ALLOWED_ORIGINS = (process.env.CORS_ORIGINS || "http://localhost:8080,http://localhost:5173")
-  .split(",")
-  .map((o) => o.trim());
+const allowedOrigin = process.env.ALLOWED_ORIGIN || "*";
 
-app.use(cors({
+const corsOptions = {
   origin: (origin, cb) => {
-    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
-    cb(new Error("CORS"));
+    if (!origin) return cb(null, true);
+    if (allowedOrigin === "*") return cb(null, true);
+    return cb(null, origin === allowedOrigin);
   },
-  methods: ["POST", "OPTIONS"],
-}));
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  optionsSuccessStatus: 204,
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 app.use(express.json({ limit: "10kb" }));
 
 const dataDir = path.join(__dirname, "data");
